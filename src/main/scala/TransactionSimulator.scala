@@ -52,7 +52,7 @@ final class TransactionSimulator
       anchorCell <- AtomicCell[IO].of(Option.empty[(Instant, Instant)])
     } yield {
       CsvParser
-        .streamRows(csvPath, checkpoint, logger)
+        .streamRows(csvPath, checkpoint)
         .evalMap { row =>
           for {
             // --- Timing ---

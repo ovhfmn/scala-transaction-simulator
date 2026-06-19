@@ -8,12 +8,11 @@ import java.time.format.DateTimeFormatter
 
 object CsvParser {
 
-  private val csvDateFormat = DateTimeFormatter.ofPattern("yyyy-dd-MM HH:mm:ss")
+  private val csvDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
-  def streamRows(csvPath: String, resumeAfter: Option[Instant],
-                 logger: Logger[IO])
-  //                (using logger: Logger[IO])
-  : Stream[IO, TransactionRow] = {
+  def streamRows(csvPath: String,
+                 resumeAfter: Option[Instant])
+                (using logger: Logger[IO]): Stream[IO, TransactionRow] = {
     Files[IO]
       .readAll(Path(csvPath))
       .through(text.utf8.decode)
@@ -26,7 +25,7 @@ object CsvParser {
         case Some((headerLine, rest)) =>
           val headers = headerLine.split(",").map(_.trim.toLowerCase).toVector
 
-          val dateIdx = headers.indexWhere(h => h == "datetime")
+          val dateIdx = headers.indexOf("datetime")
           val clientIdx = headers.indexOf("client_id")
           val amountIdx = headers.indexOf("amount")
 
@@ -41,7 +40,7 @@ object CsvParser {
           }
           else {
             rest.evalMapFilter { line =>
-                parseRow(csvPath, line, dateIdx, clientIdx, amountIdx, resumeAfter, logger)
+                parseRow(csvPath, line, dateIdx, clientIdx, amountIdx, resumeAfter)
               }
               .pull
               .echo
@@ -49,17 +48,8 @@ object CsvParser {
       }.stream
   }
 
-  private def parseRow(
-                        csvPath: String,
-                        line: String,
-                        dateIdx: Int,
-                        clientIdx: Int,
-                        amountIdx: Int,
-                        resumeAfter: Option[Instant],
-                        logger: Logger[IO]
-                      )
-  //                      (using logger: Logger[IO])
-  : IO[Option[TransactionRow]] = IO {
+  private def parseRow(csvPath: String, line: String, dateIdx: Int, clientIdx: Int, amountIdx: Int, resumeAfter: Option[Instant])
+                      (using logger: Logger[IO]): IO[Option[TransactionRow]] = IO {
     val cols = line.split(",").map(_.trim)
 
     val result = for {
