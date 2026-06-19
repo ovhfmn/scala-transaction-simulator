@@ -10,6 +10,19 @@ import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Server
 import org.typelevel.log4cats.Logger
 
+/** Runtime control HTTP API
+ *
+ * Endopints:
+ * POST /control/pause  - stop all streams
+ * POST /control/resume - resume all streams
+ * GET  /control/status - current status + event counters
+ *
+ * Example:
+ * curl -X POST https://localhost:9090/control/pause
+ * curl -X POST https://localhost:9090/control/resume
+ * curl https://localhost:9090/control/status
+ *
+ */
 object ControlApi {
 
   def server(control: StreamControl,

@@ -5,6 +5,20 @@ import org.http4s.ember.client.EmberClientBuilder
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
+/** Entry point for event-driven transaction simulator
+ *
+ * Runs two concurrent fibers:
+ * 1. TransactionSimulator  - streams CSV files, fires HTTP calls
+ * 2. ControlApi server     - accept pause/resume/status command
+ *
+ * Both run under IO.race   - if either terminates (simulator exhausts all files, or
+ * server crashs), the other is cancelled and the process exits cleanly.
+ *
+ * Resource lifecicle:
+ * EmberClient and EmberServer are both managed via Resource -
+ * connection pools are released on shutdown regardless of how
+ * the process exits - signal(2), exception(1), normal(0) completion.
+ */
 object Main extends IOApp {
 
   override def run(args: List[String]): IO[ExitCode] = {
