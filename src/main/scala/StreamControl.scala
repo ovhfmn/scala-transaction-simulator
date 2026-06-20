@@ -1,7 +1,15 @@
 import cats.effect.IO
 import cats.effect.std.AtomicCell
-import fs2.io.file.Watcher.EventType
 
+/** Shared mutable control state for running simulator
+ *
+ * All streams read from the same StateControl instance -
+ * pausing affects all streams simultaneously.
+ *
+ * Uses AtomicCell for thread-safe updates w/o locks.
+ * Reads are cheap
+ *
+ */
 final class StreamControl
 (
   pausedCell: AtomicCell[IO, Boolean],
@@ -12,6 +20,11 @@ final class StreamControl
   def resume: IO[Unit] = pausedCell.set(false)
   def isPaused: IO[Boolean] = pausedCell.get
 
+  /** Block the calling fiber until the stream is unpaused
+   *
+   * Uses IO.sleep - yields the thread, does not block.
+   * 500ms is a reasonable tradeff between responsiveness & CPU overhead
+   */
   def awaitResumed: IO[Unit] =
     isPaused.flatMap {
       case false => IO.unit
@@ -25,6 +38,7 @@ final class StreamControl
   def getStats: IO[StreamStats] = statsCell.get
 }
 
+/** Running counters - reported by GET /control/status */
 object StreamControl {
   def make: IO[StreamControl] = {
     for {

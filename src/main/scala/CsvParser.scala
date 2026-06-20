@@ -6,6 +6,15 @@ import org.typelevel.log4cats.Logger
 import java.time.{Instant, LocalDateTime, ZoneOffset}
 import java.time.format.DateTimeFormatter
 
+/** Stream TransactionRows from a CSV file.
+ *
+ * Columns resolved by header name. Requiered columns:
+ * - client_id    :ISO-8601 datetim string
+ * - datetime     :String
+ * - amount       :Decimal
+ *
+ * Resume support: rows w/ dateTime <= resumeAfter are skipped.
+ */
 object CsvParser {
 
   private val csvDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")

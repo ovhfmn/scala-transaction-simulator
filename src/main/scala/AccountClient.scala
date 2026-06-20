@@ -1,11 +1,19 @@
 import cats.effect.IO
-import io.circe.generic.auto.*
-import io.circe.syntax.*
-import org.http4s.circe.CirceEntityCodec.*
+import io.circe.Encoder
+import io.circe.generic.semiauto.deriveEncoder
+import io.circe.syntax.EncoderOps
+import org.http4s.circe.jsonEncoder
 import org.http4s.client.Client
-import org.http4s.*
+import org.http4s.{Method, Request, Status, Uri}
 import org.typelevel.log4cats.Logger
 
+/** Outbound HTTP client for the Account Service.
+ *
+ * 1. Knows only public API contract.
+ * 2. Drives traffic.
+ *
+ * Errors handling: log and continue.
+ */
 final class AccountClient(
                            client: Client[IO],
                            baseUri: Uri,
@@ -58,3 +66,6 @@ final class AccountClient(
 }
 
 private final case class AmountRequest(amount: BigDecimal)
+
+object AmountRequest:
+  given Encoder[AmountRequest] = deriveEncoder

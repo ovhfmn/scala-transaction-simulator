@@ -30,7 +30,8 @@ object Main extends IOApp {
         s"transaction-simulator starting -" +
           s"dataDir=${config.dataDir} " +
           s"serviceUrl=${config.accountServiceUrl} " +
-          s"controlPort=${config.controlPort}"
+          s"controlPort=${config.controlPort} " +
+          s"parallelism=${config.parallelism}"
       )
 
       control <- StreamControl.make

@@ -5,6 +5,18 @@ import org.typelevel.log4cats.Logger
 
 import java.time.Instant
 
+/** Persists and reads per-file stream checkpoints.
+ *
+ * Each CSV file gets its own checkpoint file:
+ * transaction_2010.csv -> checkpoints/transaction_2010.csv.checkpoint
+ *
+ * Concurrency: each CSV stream owns its checkpoint exclusively.
+ * No locking needed - one writer per checkpoint file by design.
+ *
+ * On corruption (unreadable file, invalid timestamp): log a warning and
+ * start from the beginning.
+ *
+ */
 final class CheckpointStore(checkpointDir: String)(using logger: Logger[IO]) {
 
   private def checkpointPath(csvPath: String): Path = {
@@ -12,6 +24,10 @@ final class CheckpointStore(checkpointDir: String)(using logger: Logger[IO]) {
     Path(s"$checkpointDir/$filename.checkpoint")
   }
 
+  /** Read the last successfully processed timestamp for a given CSV file
+   *
+   * Returns None on first run or if the checkpoint file is unreadable.
+   */
   def read(csvPath: String): IO[Option[Instant]] = {
     val path = checkpointPath(csvPath)
     Files[IO]
@@ -40,6 +56,11 @@ final class CheckpointStore(checkpointDir: String)(using logger: Logger[IO]) {
       }
   }
 
+  /** Write the last successfully processed timestamp
+   *
+   * Overwrites the existing checkpoint automatically;
+   * The file always contains exactly one valid timestamp.
+   */
   def write(csvPath: String, timestamp: Instant): IO[Unit] = {
     val path = checkpointPath(csvPath)
     fs2.Stream

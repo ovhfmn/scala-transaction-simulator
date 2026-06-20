@@ -1,9 +1,35 @@
 import java.time.{Instant, ZoneOffset}
 import scala.util.Random
 
+/** Emitetes an income for a given account; determines salary's date and amount.
+ *
+ * Design: fullt deterministic, zero external state.
+ * - Salary date is derived from clientId hash; stable across restarts.
+ * - Salary emited when the current row's dateTime crosses the account's
+ * salary day.
+ *
+ * Salary amount rule:
+ * - overdraftLimit >= 20_000   ->  salary = overdraftLimit * 0.1
+ * - overdraftLimit <  20_000   ->  salary = random in [1500, 5500]
+ *
+ * Random salary uses clientId + year-month as seed.
+ */
 object SalaryEmitter {
+  /** Day to recive salary in range [1, 28] to avoid edge cases */
   def salaryDayOfMonth(clientId: String): Int = (clientId.hashCode.abs % 28) + 1
 
+  /** True if salary should be emitted.
+   *
+   * Triggers when:
+   * 1. The current row's day-of-month >= salary day, AND
+   * 2. The previous row's day-of-month < salary day
+   *
+   *
+   *
+   * @param clientId  Account identifier
+   * @param previous  dateTime of the previous row
+   * @param current   dateTime of the current row
+   */
   def shouldEmit(
                   clientId: String,
                   previous: Option[Instant],
@@ -34,6 +60,10 @@ object SalaryEmitter {
     }
   }
 
+  /**
+   * Reproducable - same seed same amount.
+   * Not trully random.
+   */
   def salaryAmount(
                     clientId: String,
                     overdraftLimit: BigDecimal,

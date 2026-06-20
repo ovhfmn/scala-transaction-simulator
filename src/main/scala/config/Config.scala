@@ -24,7 +24,7 @@ object Config {
       env("DATA_DIR").as[String].default("./src/main/resources"),
       env("CHECKPOINT_DIR").as[String].default("./src/main/resources/checkpoints"),
       env("CONTROL_PORT").as[Int].default(9090),
-      env("PARALLELISM").as[Byte].default(4)
+      env("PARALLELISM").as[Byte].default(8)
     ).parMapN(Config.apply).load[IO]
   }
 }
