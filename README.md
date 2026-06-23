@@ -18,7 +18,7 @@ transactions_*.csv  (mounted directory)
         | discovered at startup + watched for new files
         v
 +-----------------------------------------------+
-|              Event Driver                      |
+|              Transaction Simulator             |
 |                                                |
 |  FS2 file watcher                              |
 |  per-file streams (parJoin)                    |
@@ -88,7 +88,6 @@ All values read from environment variables at startup. Missing required variable
 | `ACCOUNT_SERVICE_URL` | `http://http-service:8080` | Account Service base URL                   |
 | `DATA_DIR`           | `/app/data`                | Directory containing transaction CSV files |
 | `CHECKPOINT_DIR`     | `/app/checkpoints`         | Per-file checkpoint storage                |
-| `DATA_DIR`           | `/app/archive`             | Directory containing exhausted CSV files   |
 | `CONTROL_PORT`       | `9090`                     | Control API port                           |
 | `PARALLELISM`        | `4`                        | Max concurrent file streams                |
 
@@ -100,7 +99,7 @@ Required columns (resolved by header name):
 
 | Column              | Used as |
 |---------------------|---|
-| `datetime`          | Event timestamp — drives replay timing |
+| `datetime`          | Event timestamp (format: `yyyy-MM-dd HH:mm:ss`) — drives replay timing |
 | `client_id`         | Account ID in the HTTP Service |
 | `amount`            | Signed decimal: positive = debit, negative = credit |
 
@@ -128,9 +127,11 @@ All other columns are ignored.
 
 ---
 
-## Features
+## Implementation notes
 
 - Failed rows are logged and skipped.
 - Pause granularity is per-row (~500ms response time).
 - `overdraftLimit` uses a safe default of 0
 - Linear CSV scan on resume — rows before the checkpoint are skipped by reading and discarding.
+- Processed files are archived to DATA_DIR/archive/.
+- Files are processed concurrently within a single instance via PARALLELISM, not horizontally scaled.

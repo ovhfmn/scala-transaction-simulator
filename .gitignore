@@ -52,8 +52,12 @@ build/
 # Log files
 *.log
 
-# Events
-*.jsonl
+# Transactions
+src/main/resources/archive/
+src/main/resources/checkpoints/
+#src/main/resources/
+*.csv
+*.checkpoint
 
 # sbt specific
 project/target/
