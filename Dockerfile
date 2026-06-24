@@ -24,13 +24,16 @@ RUN sbt -mem 2048 assembly
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 
-RUN useradd -r -u 1001 -g root banking_simulator
-RUN mkdir -p /app/logs /app/data /app/checkpoints && \
-    chown -R banking_simulator:root /app
+ARG UID=1001
+ARG GID=1001
 
-USER banking_simulator
+RUN mkdir -p /app/logs /app/data /app/checkpoints
 
 COPY --from=builder /build/target/scala-3.3.7/transaction-simulator.jar ./app.jar
+
+RUN chown -R ${UID}:${GID} /app
+
+USER ${UID}
 
 EXPOSE 9090
 
